@@ -1,6 +1,18 @@
 from database.vector_db import VectorDatabase
 from utils.embeddings import get_ollama_embedding
 
+def print_stored_vectors(vector_db, max_lines=100):
+    print(f"\n--- Showing up to {max_lines} stored vectors and their documents ---")
+    all_data = vector_db.collection.get()
+    print(all_data)
+    docs = all_data["documents"][0] if all_data["documents"] else []
+    vectors = all_data["embeddings"][0] if all_data["embeddings"] else []
+    for i, (doc, vec) in enumerate(zip(docs, vectors)):
+        if i >= max_lines:
+            break
+        print(f"{i+1}. Document: {doc}")
+        print(f"   Vector: {vec}")  # Print the full embedding vector
+
 def fetch_and_print_most_similar(vector_db, question, model="mxbai-embed-large"):
     question_vector = get_ollama_embedding(question, model=model)
     similar_docs = vector_db.query_similar(question_vector, top_n=1)
@@ -105,9 +117,13 @@ def main():
     ]
     for doc in documents:
         vector = get_ollama_embedding(doc, model="mxbai-embed-large")
+        # print(doc,vector)
         vector_db.add_document(doc, vector)
 
     print("All documents and their vectors have been stored in ChromaDB.")
+
+    # Show stored vectors (first 100)
+    # print_stored_vectors(vector_db, max_lines=100)
 
     # Query section
     question = "what is samundar learning and eating?"
